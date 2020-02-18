@@ -8,6 +8,7 @@ from injector import Injector
 from injector import inject
 from injector import singleton
 
+from infra import Response
 from models import Feedback
 from infra import Repository
 from infra import Store
@@ -58,33 +59,33 @@ class FeedbackFetchListService:
         return self._feedback_repository.fetch_list()
 
 
-def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> typing.Optional[int]:
+def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> Response:
     if injector is None:
         injector = Injector()
 
     if len(argv) <= 1:
         progname = os.path.basename(argv[0]) if len(argv) > 0 else "<progname>"
-        print(f"[Usage] {progname} <mode>")
-        return None
+        return Response(mode="", status=500, message=[f"[usage] {progname} <mode>"])
 
     mode = argv[1]
     if mode == "create-feedback":
         create_service: FeedbackCreateService = injector.get(FeedbackCreateService)
         feedback = create_service.execute(title="要望タイトル", description="要望本文")
-        print(feedback)
+        return Response(mode=mode, status=200, message=[feedback])
     elif mode == "list-feedbacks":
         fetch_list_service: FeedbackFetchListService = injector.get(FeedbackFetchListService)
         feedbacks = fetch_list_service.execute()
-        for f in feedbacks:
-            print(f)
+        return Response(mode=mode, status=200, message=feedbacks)
     else:
         raise RuntimeError(f"Unknown mode: {mode}")
-
-    repository: Repository = injector.get(Repository)
-    repository.persistent()
 
 
 if __name__ == "__main__":
     container = Injector()
-    container.binder.bind(Repository, to=Repository.load(filename=DATABASE_FILE), scope=singleton)
-    main(argv=sys.argv, injector=container)
+    repository = Repository.load(filename=DATABASE_FILE)
+    container.binder.bind(Repository, to=repository, scope=singleton)
+
+    response = main(argv=sys.argv, injector=container)
+    print(response)
+
+    repository.persistent()
