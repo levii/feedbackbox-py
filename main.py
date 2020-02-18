@@ -6,6 +6,8 @@ import typing
 import sys
 import os
 
+from injector import inject
+
 DATABASE_FILE = "datafile.pickle"
 
 
@@ -49,13 +51,20 @@ class Repository:
             pickle.dump(self.store, file)
 
 
-@dataclasses.dataclass()
-class FeedbackRepository(Repository):
+class FeedbackRepository:
+    @inject
+    def __init__(self, repository: Repository):
+        self._repository = repository
+
+    @property
+    def _store(self) -> Store:
+        return self._repository.store
+
     def save(self, feedback: Feedback):
-        self.store.feedbacks.append(feedback)
+        self._store.feedbacks.append(feedback)
 
     def fetch_list(self) -> typing.List[Feedback]:
-        return copy.deepcopy(self.store.feedbacks)
+        return copy.deepcopy(self._store.feedbacks)
 
 
 def create_feedback() -> Feedback:
