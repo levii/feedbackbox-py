@@ -1,11 +1,13 @@
 import copy
 import datetime
-import pickle
 import typing
 import sys
 import os
 
+from injector import Injector
 from injector import inject
+from injector import singleton
+
 from models import Feedback
 from infra import Repository
 from infra import Store
@@ -29,33 +31,36 @@ class FeedbackRepository:
         return copy.deepcopy(self._store.feedbacks)
 
 
-def create_feedback() -> Feedback:
-    now = datetime.datetime.utcnow()
-    feedback = Feedback(
-        feedback_id=int(datetime.datetime.utcnow().timestamp()),
-        title="要望のタイトル",
-        description="要望の本文",
-        created_at=now,
-        updated_at=now,
-    )
-    return feedback
+class FeedbackCreateService:
+    @inject
+    def __init__(self, feedback_repository: FeedbackRepository):
+        self._feedback_repository = feedback_repository
+
+    def execute(self, title: str, description: str) -> Feedback:
+        now = datetime.datetime.utcnow()
+        feedback = Feedback(
+            feedback_id=int(datetime.datetime.utcnow().timestamp()),
+            title=title,
+            description=description,
+            created_at=now,
+            updated_at=now,
+        )
+        self._feedback_repository.save(feedback=feedback)
+        return feedback
 
 
-def list_feedbacks(store: Store) -> None:
-    print("===== Feedback =====")
-    for feedback in store.feedbacks:
-        print(feedback)
+class FeedbackFetchListService:
+    @inject
+    def __init__(self, feedback_repository: FeedbackRepository):
+        self._feedback_repository = feedback_repository
+
+    def execute(self) -> typing.List[Feedback]:
+        return self._feedback_repository.fetch_list()
 
 
-def main(argv: typing.List[str], database_file: typing.Optional[str] = None) -> typing.Optional[int]:
-    if database_file is None:
-        database_file = DATABASE_FILE
-
-    if os.path.exists(database_file):
-        with open(database_file, "rb") as file:
-            store = pickle.load(file)
-    else:
-        store = Store()
+def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> typing.Optional[int]:
+    if injector is None:
+        injector = Injector()
 
     if len(argv) <= 1:
         progname = os.path.basename(argv[0]) if len(argv) > 0 else "<progname>"
@@ -64,16 +69,22 @@ def main(argv: typing.List[str], database_file: typing.Optional[str] = None) -> 
 
     mode = argv[1]
     if mode == "create-feedback":
-        feedback = create_feedback()
-        store.feedbacks.append(feedback)
+        create_service: FeedbackCreateService = injector.get(FeedbackCreateService)
+        feedback = create_service.execute(title="要望タイトル", description="要望本文")
+        print(feedback)
     elif mode == "list-feedbacks":
-        list_feedbacks(store)
+        fetch_list_service: FeedbackFetchListService = injector.get(FeedbackFetchListService)
+        feedbacks = fetch_list_service.execute()
+        for f in feedbacks:
+            print(f)
     else:
         raise RuntimeError(f"Unknown mode: {mode}")
 
-    with open(database_file, "wb") as file:
-        pickle.dump(store, file)
+    repository: Repository = injector.get(Repository)
+    repository.persistent()
 
 
 if __name__ == "__main__":
-    main(argv=sys.argv)
+    container = Injector()
+    container.binder.bind(Repository, to=Repository.load(filename=DATABASE_FILE), scope=singleton)
+    main(argv=sys.argv, injector=container)

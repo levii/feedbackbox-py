@@ -34,5 +34,8 @@ class Repository:
         )
 
     def persistent(self):
+        if self.filename is None:
+            return
+
         with open(self.filename, "wb") as file:
             pickle.dump(self.store, file)

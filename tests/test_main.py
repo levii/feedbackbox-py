@@ -1,29 +1,26 @@
-import pickle
 import typing
-import os
-import datetime
-import uuid
-
 import main
 
+from infra import Repository
 from infra import Store
+from tests.conftest_container import container
 
 
 class TestMain:
+    @classmethod
+    def setup_class(cls):
+        cls.container = container
+
+    @property
+    def repository(self) -> Repository:
+        return self.container.get(Repository)
+
+    def teardown_method(self, _):
+        self.repository.reset()
+
     def _execute(self, argv: typing.List[str]) -> typing.Tuple[typing.Optional[int], Store]:
-        if not os.path.exists("tmp"):
-            os.mkdir("tmp")
-        t = int(datetime.datetime.utcnow().timestamp())
-        database_file = os.path.join("tmp", f"{t}.{uuid.uuid4()}.pickle")
-
-        ret = main.main(argv=argv, database_file=database_file)
-
-        if os.path.exists(database_file):
-            with open(database_file, "rb") as file:
-                store = pickle.load(file)
-        else:
-            store = Store()
-        return ret, store
+        ret = main.main(argv=argv, injector=self.container)
+        return ret, self.repository.store
 
     def test_empty_args(self):
         ret, _ = self._execute(argv=[])
