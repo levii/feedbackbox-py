@@ -3,7 +3,7 @@ import typing
 import uuid
 import datetime
 
-import main
+from infra import Repository
 
 
 class TestRepository:
@@ -24,17 +24,17 @@ class TestRepository:
             os.remove(self.repository_file)
 
     def test_init_repository(self):
-        repo = main.Repository()
-        assert isinstance(repo, main.Repository)
+        repo = Repository()
+        assert isinstance(repo, Repository)
 
     def test_load_and_persistent(self):
         assert os.path.exists(self.repository_file) is False
-        repo = main.Repository.load(filename=self.repository_file)
+        repo = Repository.load(filename=self.repository_file)
         repo.persistent()
         assert os.path.exists(self.repository_file) is True
 
-        repo2 = main.Repository.load(filename=self.repository_file)
+        repo2 = Repository.load(filename=self.repository_file)
         assert repo.store.created_at == repo2.store.created_at
 
-        repo3 = main.Repository()
+        repo3 = Repository()
         assert repo.store.created_at != repo3.store.created_at

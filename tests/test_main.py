@@ -6,9 +6,11 @@ import uuid
 
 import main
 
+from infra import Store
+
 
 class TestMain:
-    def _execute(self, argv: typing.List[str]) -> typing.Tuple[typing.Optional[int], main.Store]:
+    def _execute(self, argv: typing.List[str]) -> typing.Tuple[typing.Optional[int], Store]:
         if not os.path.exists("tmp"):
             os.mkdir("tmp")
         t = int(datetime.datetime.utcnow().timestamp())
@@ -20,7 +22,7 @@ class TestMain:
             with open(database_file, "rb") as file:
                 store = pickle.load(file)
         else:
-            store = main.Store()
+            store = Store()
         return ret, store
 
     def test_empty_args(self):
