@@ -51,3 +51,19 @@ class Response:
     mode: str
     status: int
     message: Union[List[Any], Dict[Any, Any]]
+
+    def pretty(self) -> str:
+        result = [
+            f"mode = {self.mode}",
+            f"status = {self.status}",
+            "-" * 40
+        ]
+        if isinstance(self.message, dict):
+            for k, v in self.message.items():
+                result.append(k)
+                result.append(v)
+        else:
+            for i in self.message:
+                result.append(i)
+
+        return "\n".join([o if isinstance(o, str) else repr(o) for o in result])

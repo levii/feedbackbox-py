@@ -40,6 +40,6 @@ if __name__ == "__main__":
     container.binder.bind(Repository, to=repository, scope=singleton)
 
     response = main(argv=sys.argv, injector=container)
-    print(response)
+    print(response.pretty())
 
     repository.persistent()
