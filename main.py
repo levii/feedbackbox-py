@@ -1,62 +1,16 @@
-import copy
-import datetime
 import typing
 import sys
 import os
 
 from injector import Injector
-from injector import inject
 from injector import singleton
+from handlers import FeedbackCreateHandler
+from handlers import FeedbackFetchListHandler
 
 from infra import Response
-from models import Feedback
 from infra import Repository
-from infra import Store
 
 DATABASE_FILE = "datafile.pickle"
-
-
-class FeedbackRepository:
-    @inject
-    def __init__(self, repository: Repository):
-        self._repository = repository
-
-    @property
-    def _store(self) -> Store:
-        return self._repository.store
-
-    def save(self, feedback: Feedback):
-        self._store.feedbacks.append(feedback)
-
-    def fetch_list(self) -> typing.List[Feedback]:
-        return copy.deepcopy(self._store.feedbacks)
-
-
-class FeedbackCreateHandler:
-    @inject
-    def __init__(self, feedback_repository: FeedbackRepository):
-        self._feedback_repository = feedback_repository
-
-    def execute(self, title: str, description: str) -> Feedback:
-        now = datetime.datetime.utcnow()
-        feedback = Feedback(
-            feedback_id=int(datetime.datetime.utcnow().timestamp()),
-            title=title,
-            description=description,
-            created_at=now,
-            updated_at=now,
-        )
-        self._feedback_repository.save(feedback=feedback)
-        return feedback
-
-
-class FeedbackFetchListHandler:
-    @inject
-    def __init__(self, feedback_repository: FeedbackRepository):
-        self._feedback_repository = feedback_repository
-
-    def execute(self) -> typing.List[Feedback]:
-        return self._feedback_repository.fetch_list()
 
 
 def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> Response:
