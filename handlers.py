@@ -72,5 +72,17 @@ class FeedbackFetchListHandler:
     def __init__(self, feedback_repository: FeedbackRepository):
         self._feedback_repository = feedback_repository
 
-    def execute(self) -> typing.List[Feedback]:
-        return self._feedback_repository.fetch_list()
+    def execute(self, user: User) -> typing.List[Feedback]:
+        feedbacks = self._feedback_repository.fetch_list()
+
+        if user.role == "support":
+            return feedbacks
+
+        if user.role == "customer":
+            result = []
+            for feedback in feedbacks:
+                if feedback.user_id == user.user_id:
+                    result.append(feedback)
+            return result
+
+        raise RuntimeError(f"Unknown user.role = {user.role}")

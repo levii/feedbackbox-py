@@ -9,6 +9,7 @@ from handlers import FeedbackFetchListHandler
 
 from infra import Response
 from infra import Repository
+from models import User
 
 DATABASE_FILE = "datafile.pickle"
 
@@ -27,8 +28,9 @@ def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> 
         feedback = create_handler.execute(title="要望タイトル", description="要望本文", user_id=1)
         return Response(mode=mode, status=200, message=[feedback])
     elif mode == "list-feedbacks":
+        user = User(name="Test User", role="support", user_id=1)
         fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)
-        feedbacks = fetch_list_handler.execute()
+        feedbacks = fetch_list_handler.execute(user=user)
         return Response(mode=mode, status=200, message=feedbacks)
     else:
         raise RuntimeError(f"Unknown mode: {mode}")
