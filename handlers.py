@@ -1,6 +1,7 @@
 import copy
 import datetime
 import typing
+import uuid
 
 from injector import inject
 
@@ -33,7 +34,7 @@ class FeedbackCreateHandler:
     def execute(self, title: str, description: str) -> Feedback:
         now = datetime.datetime.utcnow()
         feedback = Feedback(
-            feedback_id=int(datetime.datetime.utcnow().timestamp()),
+            feedback_id=str(uuid.uuid4()),
             title=title,
             description=description,
             created_at=now,

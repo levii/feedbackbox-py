@@ -4,7 +4,7 @@ import datetime
 
 @dataclasses.dataclass(frozen=True)
 class Feedback:
-    feedback_id: int
+    feedback_id: str
     title: str
     description: str
     created_at: datetime.datetime
