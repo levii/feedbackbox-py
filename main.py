@@ -32,7 +32,7 @@ class FeedbackRepository:
         return copy.deepcopy(self._store.feedbacks)
 
 
-class FeedbackCreateService:
+class FeedbackCreateHandler:
     @inject
     def __init__(self, feedback_repository: FeedbackRepository):
         self._feedback_repository = feedback_repository
@@ -50,7 +50,7 @@ class FeedbackCreateService:
         return feedback
 
 
-class FeedbackFetchListService:
+class FeedbackFetchListHandler:
     @inject
     def __init__(self, feedback_repository: FeedbackRepository):
         self._feedback_repository = feedback_repository
@@ -69,12 +69,12 @@ def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> 
 
     mode = argv[1]
     if mode == "create-feedback":
-        create_service: FeedbackCreateService = injector.get(FeedbackCreateService)
-        feedback = create_service.execute(title="要望タイトル", description="要望本文")
+        create_handler: FeedbackCreateHandler = injector.get(FeedbackCreateHandler)
+        feedback = create_handler.execute(title="要望タイトル", description="要望本文")
         return Response(mode=mode, status=200, message=[feedback])
     elif mode == "list-feedbacks":
-        fetch_list_service: FeedbackFetchListService = injector.get(FeedbackFetchListService)
-        feedbacks = fetch_list_service.execute()
+        fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)
+        feedbacks = fetch_list_handler.execute()
         return Response(mode=mode, status=200, message=feedbacks)
     else:
         raise RuntimeError(f"Unknown mode: {mode}")
