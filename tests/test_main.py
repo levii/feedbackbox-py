@@ -19,30 +19,27 @@ class TestMain:
     def teardown_method(self, _):
         self.repository.reset()
 
-    def _execute(self, argv: typing.List[str]) -> Response:
-        return main.main(argv=argv, injector=self.container)
-
-    def test_empty_args(self):
-        response = self._execute(argv=[])
-        assert isinstance(response, Response)
-        assert response.status == 500
+    def _execute(self, args: typing.List[str]) -> Response:
+        parser = main.build_parser()
+        options = parser.parse_args(args)
+        return main.main(mode=options.mode, args=options, injector=self.container)
 
     def test_list_feedbacks(self):
-        response = self._execute(argv=["main.py", "list-feedbacks"])
-        assert response.mode == "list-feedbacks"
+        response = self._execute(args=["feedback", "list", "--user=1"])
+        assert response.mode == "feedback-list"
         assert response.status == 200
         assert len(response.message) == 0
 
     def test_create_feedback(self):
-        response = self._execute(argv=["main.py", "create-feedback"])
-        assert response.mode == "create-feedback"
+        response = self._execute(args="feedback create --title=タイトル --description=本文 --user_id=1".split(" "))
+        assert response.mode == "feedback-create"
         assert response.status == 200
         assert len(response.message) == 1
         feedback = response.message[0]
         assert isinstance(feedback, Feedback)
 
-        list_response = self._execute(argv=["main.py", "list-feedbacks"])
-        assert list_response.mode == "list-feedbacks"
+        list_response = self._execute(args="feedback list --user_id=1".split(" "))
+        assert list_response.mode == "feedback-list"
         assert list_response.status == 200
         assert len(list_response.message) == 1
         assert list_response.message == [feedback]

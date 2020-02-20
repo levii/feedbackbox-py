@@ -1,6 +1,6 @@
-import typing
+import argparse
 import sys
-import os
+import typing
 
 from injector import Injector
 from injector import singleton
@@ -14,20 +14,35 @@ from models import User
 DATABASE_FILE = "datafile.pickle"
 
 
-def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> Response:
+def build_parser():
+    parser = argparse.ArgumentParser(prog="FeedbackBox")
+    subparsers = parser.add_subparsers()
+
+    parser_feedback = subparsers.add_parser("feedback")
+    feedback_subparsers = parser_feedback.add_subparsers()
+
+    feedback_create_parser = feedback_subparsers.add_parser("create")
+    feedback_create_parser.add_argument("--title", type=str, help="Title", required=True)
+    feedback_create_parser.add_argument("--description", type=str, help="Description", required=True)
+    feedback_create_parser.add_argument("--user_id", type=int, help="UserID", required=True)
+    feedback_create_parser.set_defaults(mode="feedback-create")
+
+    feedback_list_parser = feedback_subparsers.add_parser("list")
+    feedback_list_parser.add_argument("--user_id", type=int, help="UserID", required=True)
+    feedback_list_parser.set_defaults(mode="feedback-list")
+
+    return parser
+
+
+def main(mode: str, args: argparse.Namespace, injector: typing.Optional[Injector] = None) -> Response:
     if injector is None:
         injector = Injector()
 
-    if len(argv) <= 1:
-        progname = os.path.basename(argv[0]) if len(argv) > 0 else "<progname>"
-        return Response(mode="", status=500, message=[f"[usage] {progname} <mode>"])
-
-    mode = argv[1]
-    if mode == "create-feedback":
+    if mode == "feedback-create":
         create_handler: FeedbackCreateHandler = injector.get(FeedbackCreateHandler)
-        feedback = create_handler.execute(title="要望タイトル", description="要望本文", user_id=1)
+        feedback = create_handler.execute(title=args.title, description=args.description, user_id=args.user_id)
         return Response(mode=mode, status=200, message=[feedback])
-    elif mode == "list-feedbacks":
+    elif mode == "feedback-list":
         user = User(name="Test User", role="support", user_id=1)
         fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)
         feedbacks = fetch_list_handler.execute(user=user)
@@ -37,11 +52,18 @@ def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> 
 
 
 if __name__ == "__main__":
+    arg_parser = build_parser()
+    options = arg_parser.parse_args()
+
+    if "mode" not in options:
+        arg_parser.parse_args(sys.argv[1:] + ["-h"])
+        exit()
+
     container = Injector()
     repository = Repository.load(filename=DATABASE_FILE)
     container.binder.bind(Repository, to=repository, scope=singleton)
 
-    response = main(argv=sys.argv, injector=container)
+    response = main(mode=options.mode, args=options, injector=container)
     print(response.pretty())
 
     repository.persistent()
