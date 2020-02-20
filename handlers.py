@@ -8,6 +8,28 @@ from injector import inject
 from infra import Repository
 from infra import Store
 from models import Feedback
+from models import User
+
+
+class UserRepository:
+    @inject
+    def __init__(self, repository: Repository):
+        self._repository = repository
+
+    @property
+    def _store(self) -> Store:
+        return self._repository.store
+
+    def save(self, user: User) -> User:
+        if user.user_id is None:
+            user.user_id = self._store.next_user_id
+            self._store.next_user_id += 1
+
+        self._store.users[user.user_id] = user
+        return user
+
+    def fetch(self, user_id: int) -> typing.Optional[User]:
+        return self._store.users.get(user_id)
 
 
 class FeedbackRepository:

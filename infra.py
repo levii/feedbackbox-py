@@ -10,11 +10,14 @@ from typing import Optional
 from typing import Union
 
 from models import Feedback
+from models import User
 
 
 @dataclasses.dataclass()
 class Store:
     feedbacks: List[Feedback] = dataclasses.field(default_factory=list)
+    users: Dict[int, User] = dataclasses.field(default_factory=dict)
+    next_user_id: int = 1
     created_at: datetime.datetime = dataclasses.field(default_factory=datetime.datetime.utcnow)
 
 
