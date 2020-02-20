@@ -24,7 +24,7 @@ def main(argv: typing.List[str], injector: typing.Optional[Injector] = None) -> 
     mode = argv[1]
     if mode == "create-feedback":
         create_handler: FeedbackCreateHandler = injector.get(FeedbackCreateHandler)
-        feedback = create_handler.execute(title="要望タイトル", description="要望本文")
+        feedback = create_handler.execute(title="要望タイトル", description="要望本文", user_id=1)
         return Response(mode=mode, status=200, message=[feedback])
     elif mode == "list-feedbacks":
         fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)

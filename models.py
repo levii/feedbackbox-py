@@ -6,6 +6,7 @@ from typing import Optional
 @dataclasses.dataclass(frozen=True)
 class Feedback:
     feedback_id: str
+    user_id: int
     title: str
     description: str
     created_at: datetime.datetime

@@ -22,7 +22,7 @@ class TestFeedbackCreateHandler:
         assert self.feedback_repository.fetch_list() == []
         title = "改善要望のタイトル"
         description = "こういう改善をしてほしい"
-        self.handler.execute(title=title, description=description)
+        self.handler.execute(title=title, description=description, user_id=123)
 
         feedbacks = self.feedback_repository.fetch_list()
         assert len(feedbacks) == 1

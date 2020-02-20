@@ -53,10 +53,11 @@ class FeedbackCreateHandler:
     def __init__(self, feedback_repository: FeedbackRepository):
         self._feedback_repository = feedback_repository
 
-    def execute(self, title: str, description: str) -> Feedback:
+    def execute(self, title: str, description: str, user_id: int) -> Feedback:
         now = datetime.datetime.utcnow()
         feedback = Feedback(
             feedback_id=str(uuid.uuid4()),
+            user_id=user_id,
             title=title,
             description=description,
             created_at=now,
