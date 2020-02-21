@@ -86,10 +86,14 @@ class FeedbackCreateHandler:
 
 class FeedbackFetchListHandler:
     @inject
-    def __init__(self, feedback_repository: FeedbackRepository):
+    def __init__(self, user_repository: UserRepository, feedback_repository: FeedbackRepository):
+        self._user_repository = user_repository
         self._feedback_repository = feedback_repository
 
-    def execute(self, user: User) -> typing.List[Feedback]:
+    def execute(self, user_id: int) -> typing.List[Feedback]:
+        user = self._user_repository.fetch(user_id)
+        if user is None:
+            raise RuntimeError(f"User(user_id={user_id}) is not found")
         feedbacks = self._feedback_repository.fetch_list()
 
         if user.role == "support":

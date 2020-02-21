@@ -1,5 +1,6 @@
 import typing
 import main
+from handlers import UserRepository
 
 from infra import Repository
 from infra import Response
@@ -12,10 +13,12 @@ class TestMain:
     @classmethod
     def setup_class(cls):
         cls.container = container
+        cls.repository: Repository = cls.container.get(Repository)
+        cls.user_repository: UserRepository = cls.container.get(UserRepository)
 
-    @property
-    def repository(self) -> Repository:
-        return self.container.get(Repository)
+    def setup_method(self, _):
+        self.customer_user = User(name="Customer Test User", role="customer")
+        self.user_repository.save(self.customer_user)
 
     def teardown_method(self, _):
         self.repository.reset()
@@ -28,28 +31,31 @@ class TestMain:
         return main.main(mode=options.mode, args=options, injector=self.container)
 
     def test_list_feedbacks(self):
-        response = self._execute("feedback list --user=1")
+        response = self._execute(f"feedback list --user={self.customer_user.user_id}")
         assert response.mode == "feedback-list"
         assert response.status == 200
         assert len(response.message) == 0
 
     def test_create_feedback(self):
-        response = self._execute("feedback create --title=タイトル --description=本文 --user_id=1")
+        response = self._execute(
+            f"feedback create --title=タイトル --description=本文 --user_id={self.customer_user.user_id}"
+        )
         assert response.mode == "feedback-create"
         assert response.status == 200
         assert len(response.message) == 1
         feedback = response.message[0]
         assert isinstance(feedback, Feedback)
 
-        list_response = self._execute("feedback list --user_id=1")
+        list_response = self._execute(f"feedback list --user_id={self.customer_user.user_id}")
         assert list_response.mode == "feedback-list"
         assert list_response.status == 200
         assert len(list_response.message) == 1
         assert list_response.message == [feedback]
 
     def test_scenario_1(self):
-        create_user_response = self._execute(["user", "create", "--name='Test User'", "--role='customer'"])
-        assert len(self.repository.store.users) == 1
+        prev_user_count = len(self.repository.store.users)
+        create_user_response = self._execute(["user", "create", "--name=Test User", "--role=customer"])
+        assert len(self.repository.store.users) == prev_user_count + 1
         user: User = create_user_response.message[0]
 
         feedback_response = self._execute(
