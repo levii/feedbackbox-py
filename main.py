@@ -4,6 +4,8 @@ import typing
 
 from injector import Injector
 from injector import singleton
+
+from handlers import FeedbackCommentCreateHandler
 from handlers import FeedbackCreateHandler
 from handlers import FeedbackFetchListHandler
 from handlers import UserCreateHandler
@@ -43,6 +45,15 @@ def build_parser():
     feedback_list_parser.add_argument("--user_id", type=int, help="UserID", required=True)
     feedback_list_parser.set_defaults(mode="feedback-list")
 
+    feedback_comment_parser = feedback_subparsers.add_parser("comment")
+    feedback_comment_subparsers = feedback_comment_parser.add_subparsers()
+
+    feedback_comment_create_parser = feedback_comment_subparsers.add_parser("create")
+    feedback_comment_create_parser.add_argument("--feedback_id", type=str, help="Feedback ID", required=True)
+    feedback_comment_create_parser.add_argument("--comment", type=str, help="Comment Body", required=True)
+    feedback_comment_create_parser.add_argument("--user_id", type=int, help="Comment User ID", required=True)
+    feedback_comment_create_parser.set_defaults(mode="feedback-comment-create")
+
     return parser
 
 
@@ -66,6 +77,10 @@ def main(mode: str, args: argparse.Namespace, injector: typing.Optional[Injector
         fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)
         feedbacks = fetch_list_handler.execute(user_id=args.user_id)
         return Response(mode=mode, status=200, message=feedbacks)
+    elif mode == "feedback-comment-create":
+        feedback_comment_handler: FeedbackCommentCreateHandler = injector.get(FeedbackCommentCreateHandler)
+        comment = feedback_comment_handler.execute(user_id=args.user_id, feedback_id=args.feedback_id, body=args.comment)
+        return Response(mode=mode, status=200, message=[comment])
     else:
         raise RuntimeError(f"Unknown mode: {mode}")
 

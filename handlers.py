@@ -8,6 +8,7 @@ from injector import inject
 from infra import Repository
 from infra import Store
 from models import Feedback
+from models import FeedbackComment
 from models import User
 
 
@@ -59,6 +60,10 @@ class FeedbackRepository:
         return self._repository.store
 
     def save(self, feedback: Feedback):
+        for i in reversed(range(len(self._store.feedbacks))):
+            if self._store.feedbacks[i].feedback_id == feedback.feedback_id:
+                del self._store.feedbacks[i]
+
         self._store.feedbacks.append(feedback)
 
     def fetch_list(self) -> typing.List[Feedback]:
@@ -107,3 +112,33 @@ class FeedbackFetchListHandler:
             return result
 
         raise RuntimeError(f"Unknown user.role = {user.role}")
+
+
+class FeedbackCommentCreateHandler:
+    @inject
+    def __init__(self, user_repository: UserRepository, feedback_repository: FeedbackRepository):
+        self._user_repository = user_repository
+        self._feedback_repository = feedback_repository
+
+    def execute(self, user_id: int, feedback_id: str, body: str) -> Feedback:
+        user = self._user_repository.fetch(user_id)
+        if user is None:
+            raise RuntimeError(f"User(user_id={user_id}) is not found")
+
+        feedback = None
+        for f in self._feedback_repository.fetch_list():
+            if f.feedback_id == feedback_id:
+                feedback = f
+                break
+        if feedback is None:
+            raise RuntimeError(f"Feedback(feedback_id={feedback_id}) is not found")
+
+        if user.role == "customer" and feedback.user_id != user.user_id:
+            raise RuntimeError(f"Feedback(feedback_id={feedback_id}) is not accessible from User(user_id={user_id})")
+
+        now = datetime.datetime.utcnow()
+        comment = FeedbackComment(user_id=user.user_id, body=body, created_at=now)
+        feedback.comments.append(comment)
+
+        self._feedback_repository.save(feedback)
+        return feedback
