@@ -31,6 +31,23 @@ class UserRepository:
     def fetch(self, user_id: int) -> typing.Optional[User]:
         return self._store.users.get(user_id)
 
+    def fetch_list(self) -> typing.List[User]:
+        users = []
+        for user in self._store.users.values():
+            users.append(user)
+        return users
+
+
+class UserCreateHandler:
+    @inject
+    def __init__(self, user_repository: UserRepository):
+        self._user_repository = user_repository
+
+    def execute(self, name: str, role: str) -> User:
+        user = User(name, role)
+        self._user_repository.save(user)
+        return user
+
 
 class FeedbackRepository:
     @inject
