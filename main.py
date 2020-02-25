@@ -27,6 +27,7 @@ def build_parser():
     user_create_parser = user_subparsers.add_parser("create")
     user_create_parser.add_argument("--name", type=str, help="UserName", required=True)
     user_create_parser.add_argument("--role", type=str, help="Role (customer, support)", required=True)
+    user_create_parser.add_argument("--user_id", type=int, help="UserID (optional)", required=False)
     user_create_parser.set_defaults(mode="user-create")
 
     user_list_parser = user_subparsers.add_parser("list")
@@ -63,7 +64,7 @@ def main(mode: str, args: argparse.Namespace, injector: typing.Optional[Injector
 
     if mode == "user-create":
         user_create_handler: UserCreateHandler = injector.get(UserCreateHandler)
-        user = user_create_handler.execute(name=args.name, role=args.role)
+        user = user_create_handler.execute(name=args.name, role=args.role, user_id=args.user_id)
         return Response(mode=mode, status=200, message=[user])
     elif mode == "user-list":
         user_repository: UserRepository = injector.get(UserRepository)

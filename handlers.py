@@ -44,8 +44,8 @@ class UserCreateHandler:
     def __init__(self, user_repository: UserRepository):
         self._user_repository = user_repository
 
-    def execute(self, name: str, role: str) -> User:
-        user = User(name, role)
+    def execute(self, name: str, role: str, user_id: typing.Optional[int]) -> User:
+        user = User(name, role, user_id=user_id)
         self._user_repository.save(user)
         return user
 
