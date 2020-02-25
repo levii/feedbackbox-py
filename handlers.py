@@ -91,7 +91,9 @@ class FeedbackCreateHandler:
 
 class FeedbackFetchListHandler:
     @inject
-    def __init__(self, user_repository: UserRepository, feedback_repository: FeedbackRepository):
+    def __init__(
+        self, user_repository: UserRepository, feedback_repository: FeedbackRepository
+    ):
         self._user_repository = user_repository
         self._feedback_repository = feedback_repository
 
@@ -116,7 +118,9 @@ class FeedbackFetchListHandler:
 
 class FeedbackCommentCreateHandler:
     @inject
-    def __init__(self, user_repository: UserRepository, feedback_repository: FeedbackRepository):
+    def __init__(
+        self, user_repository: UserRepository, feedback_repository: FeedbackRepository
+    ):
         self._user_repository = user_repository
         self._feedback_repository = feedback_repository
 
@@ -134,7 +138,9 @@ class FeedbackCommentCreateHandler:
             raise RuntimeError(f"Feedback(feedback_id={feedback_id}) is not found")
 
         if user.role == "customer" and feedback.user_id != user.user_id:
-            raise RuntimeError(f"Feedback(feedback_id={feedback_id}) is not accessible from User(user_id={user_id})")
+            raise RuntimeError(
+                f"Feedback(feedback_id={feedback_id}) is not accessible from User(user_id={user_id})"
+            )
 
         now = datetime.datetime.utcnow()
         comment = FeedbackComment(user_id=user.user_id, body=body, created_at=now)
