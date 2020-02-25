@@ -116,6 +116,47 @@ class FeedbackFetchListHandler:
         raise RuntimeError(f"Unknown user.role = {user.role}")
 
 
+class FeedbackUpdateHandler:
+    @inject
+    def __init__(
+        self, user_repository: UserRepository, feedback_repository: FeedbackRepository
+    ):
+        self._user_repository = user_repository
+        self._feedback_repository = feedback_repository
+
+    def execute(
+        self,
+        user_id: int,
+        feedback_id: str,
+        status: typing.Optional[str] = None,
+        support_comment: typing.Optional[str] = None,
+    ) -> Feedback:
+        user = self._user_repository.fetch(user_id)
+        if user is None:
+            raise RuntimeError(f"User(user_id={user_id}) is not found")
+
+        if user.role != "support":
+            raise RuntimeError(
+                f"PermissionError: User(user_id={user_id}, role={user.role}) is not editable for feedback."
+            )
+
+        feedback = None
+        for f in self._feedback_repository.fetch_list():
+            if f.feedback_id == feedback_id:
+                feedback = f
+                break
+        if feedback is None:
+            raise RuntimeError(f"Feedback(feedback_id={feedback_id}) is not found")
+
+        if status:
+            feedback = feedback.modify(status=status)
+        if support_comment:
+            feedback = feedback.modify(support_comment=support_comment)
+
+        self._feedback_repository.save(feedback)
+        return feedback
+
+
 class FeedbackCommentCreateHandler:
     @inject
     def __init__(

@@ -20,6 +20,11 @@ class Feedback:
     created_at: datetime.datetime
     updated_at: datetime.datetime
     comments: List[FeedbackComment] = dataclasses.field(default_factory=list)
+    status: str = "new"
+    support_comment: Optional[str] = None
+
+    def modify(self, **changes) -> "Feedback":
+        return dataclasses.replace(self, **changes)
 
 
 @dataclasses.dataclass(frozen=False)
