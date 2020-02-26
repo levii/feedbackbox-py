@@ -30,7 +30,12 @@ run user list
 
 prompt "顧客1, 2 それぞれから要望を作成する"
 run feedback create \
-    --title "顧客1からの機能追加の要望" \
+    --title "顧客1からの機能追加の要望 (その1)" \
+    --description "あれこれと便利な機能を追加してほしいです" \
+    --user_id 1001
+
+run feedback create \
+    --title "顧客1からの機能追加の要望 (その2)" \
     --description "あれこれと便利な機能を追加してほしいです" \
     --user_id 1001
 
@@ -44,3 +49,6 @@ run feedback list --user_id 9001
 
 prompt "顧客は、自分の作成した要望だけを確認できる"
 run feedback list --user_id 1001
+
+echo "サポートユーザは、要望に対してコメントを追加できる"
+echo "$ python main.py feedback comment create --user_id 9001 --feedback_id <FEEDBACK_ID> --comment <コメント本文>"
