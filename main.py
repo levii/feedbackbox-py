@@ -8,6 +8,7 @@ from injector import singleton
 from handlers import FeedbackCommentCreateHandler
 from handlers import FeedbackCreateHandler
 from handlers import FeedbackFetchListHandler
+from handlers import FeedbackUpdateHandler
 from handlers import UserCreateHandler
 from handlers import UserRepository
 
@@ -46,6 +47,13 @@ def build_parser():
     feedback_list_parser.add_argument("--user_id", type=int, help="UserID", required=True)
     feedback_list_parser.set_defaults(mode="feedback-list")
 
+    feedback_update_parser = feedback_subparsers.add_parser("update")
+    feedback_update_parser.add_argument("--feedback_id", type=str, help="Feedback ID", required=True)
+    feedback_update_parser.add_argument("--user_id", type=int, help="UserID", required=True)
+    feedback_update_parser.add_argument("--status", type=str, help="New status", required=False)
+    feedback_update_parser.add_argument("--support_comment", type=str, help="Support Comment", required=False)
+    feedback_update_parser.set_defaults(mode="feedback-update")
+
     feedback_comment_parser = feedback_subparsers.add_parser("comment")
     feedback_comment_subparsers = feedback_comment_parser.add_subparsers()
 
@@ -78,6 +86,17 @@ def main(mode: str, args: argparse.Namespace, injector: typing.Optional[Injector
         fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)
         feedbacks = fetch_list_handler.execute(user_id=args.user_id)
         return Response(mode=mode, status=200, message=feedbacks)
+    elif mode == "feedback-update":
+        feedback_update_handler: FeedbackUpdateHandler = injector.get(
+            FeedbackUpdateHandler
+        )
+        feedback = feedback_update_handler.execute(
+            user_id=args.user_id,
+            feedback_id=args.feedback_id,
+            status=args.status,
+            support_comment=args.support_comment,
+        )
+        return Response(mode=mode, status=200, message=[feedback])
     elif mode == "feedback-comment-create":
         feedback_comment_handler: FeedbackCommentCreateHandler = injector.get(FeedbackCommentCreateHandler)
         comment = feedback_comment_handler.execute(user_id=args.user_id, feedback_id=args.feedback_id, body=args.comment)
