@@ -97,7 +97,7 @@ class FeedbackFetchListHandler:
         self._user_repository = user_repository
         self._feedback_repository = feedback_repository
 
-    def execute(self, user_id: int) -> typing.List[Feedback]:
+    def execute(self, user_id: int, recently: bool) -> typing.List[Feedback]:
         user = self._user_repository.fetch(user_id)
         if user is None:
             raise RuntimeError(f"User(user_id={user_id}) is not found")
@@ -106,11 +106,19 @@ class FeedbackFetchListHandler:
         if user.role == "support":
             return feedbacks
 
+        # recentlyがTrue のときに、最後のコメント者がCSのものだけを返す
         if user.role == "customer":
             result = []
             for feedback in feedbacks:
                 if feedback.user_id == user.user_id:
-                    result.append(feedback)
+                    if recently:
+                        if len(feedback.comments) > 0:
+                            latest_comment = feedback.comments[-1]
+                            comment_user = self._user_repository.fetch(latest_comment.user_id)
+                            if comment_user.role == "support":
+                                result.append(feedback)
+                    else:
+                        result.append(feedback)
             return result
 
         raise RuntimeError(f"Unknown user.role = {user.role}")

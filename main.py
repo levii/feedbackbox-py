@@ -46,6 +46,7 @@ def build_parser():
 
     flp = fs.add_parser("list")
     flp.add_argument("--user_id", type=int, help="UserID", required=True)
+    flp.add_argument("--recently", type=bool, help="Recently filter", required=False)
     flp.set_defaults(mode="feedback-list")
 
     fsp = fs.add_parser("show")
@@ -90,7 +91,7 @@ def main(mode: str, args: argparse.Namespace, injector: typing.Optional[Injector
         return Response(mode=mode, status=200, message=[feedback])
     elif mode == "feedback-list":
         fetch_list_handler: FeedbackFetchListHandler = injector.get(FeedbackFetchListHandler)
-        feedbacks = fetch_list_handler.execute(user_id=args.user_id)
+        feedbacks = fetch_list_handler.execute(user_id=args.user_id, recently=args.recently)
         return Response(mode=mode, status=200, message=feedbacks)
     elif mode == "feedback-show":
         fetch_handler: FeedbackFetchHandler = injector.get(FeedbackFetchHandler)
