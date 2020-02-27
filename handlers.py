@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import datetime
 import typing
 import uuid
@@ -89,6 +90,24 @@ class FeedbackCreateHandler:
         return feedback
 
 
+@dataclasses.dataclass
+class FeedbackCollection:
+    collection: typing.List[Feedback]
+
+    def filter_by_user_id(self, user_id: int) -> "FeedbackCollection":
+        result = []
+        for feedback in self.collection:
+            if feedback.user_id == user_id:
+                result.append(feedback)
+        return self.__class__(result)
+
+    def filter_latest_comment_by_other_user(self, user_id: int) -> "FeedbackCollection":
+        pass
+
+    def __iter__(self):
+        return self.collection.__iter__()
+
+
 class FeedbackFetchListHandler:
     @inject
     def __init__(
@@ -108,18 +127,21 @@ class FeedbackFetchListHandler:
 
         # recentlyがTrue のときに、最後のコメント者がCSのものだけを返す
         if user.role == "customer":
-            result = []
-            for feedback in feedbacks:
-                if feedback.user_id == user.user_id:
-                    if recently:
-                        if len(feedback.comments) > 0:
-                            latest_comment = feedback.comments[-1]
-                            comment_user = self._user_repository.fetch(latest_comment.user_id)
-                            if comment_user.role == "support":
-                                result.append(feedback)
-                    else:
-                        result.append(feedback)
-            return result
+            # result = []
+            collection = FeedbackCollection(feedbacks)
+            if recently:
+                recently_filtered_collection = collection.filter_recently(...)
+
+            return collection.filter_by_user_id(user_id=user_id)
+
+            # for feedback in feedbacks:
+            #     if feedback.user_id == user.user_id:
+            #         if recently:
+            #             if feedback.is_latest_comment_by_support():
+            #                 result.append(feedback)
+            #         else:
+            #             result.append(feedback)
+            # return result
 
         raise RuntimeError(f"Unknown user.role = {user.role}")
 
